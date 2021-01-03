@@ -4,10 +4,10 @@
 
 <script>
 export default {
-  name: 'HelloWorld',
+  name: 'Counties',
   data () {
     return {
-      msg: 'Welcome to Your Vue.js App'
+      msg: 'Countries stats'
     }
   }
 }
