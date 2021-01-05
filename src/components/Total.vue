@@ -1,11 +1,10 @@
 <template>
   <main class="grey lighten-5 pa-2">
     <section>
-    <h1 class="display-1">World summury stats</h1>
-    <v-row align="canter" justify="center">
-    <stat-card v-for="card in cards" :key=card :cardTitle="card.title" :bgColor="card.bgColor" :cardAmount="card.amount"
-    :cardAmountNew="card.amountNew" :cardIcon="card.icon"/>
-    </v-row>
+      <h1 class="display-1">World summary stats</h1>
+      <v-row align="center" justify="center">
+        <stat-card v-for="card in cards" :key="card.title" :cardTitle="card.title" :bgColor="card.bgColor" :cardAmount="card.amount" :cardAmountNew="card.amountNew" :cardIcon="card.icon" />
+      </v-row>
     </section>
     <section>
       <h2 class="display-1">Visuals</h2>
@@ -15,11 +14,9 @@
     </section>
   </main>
 </template>
-
 <script>
 import StatCard from './StatCard'
 import LineChart from './lineChart'
-
 export default {
   name: 'Total',
   data () {
@@ -29,13 +26,10 @@ export default {
         { title: 'deaths', bgColor: 'red accent-2', amount: 0, amountNew: 0, icon: 'mdi-emoticon-dead' },
         { title: 'recoveries', bgColor: 'teal lighten-1', amount: 0, amountNew: 0, icon: 'mdi-hospital-box' }
       ],
-      visuals: [{
-        id: 1,
-        chartData: null,
-        options: { responsive: true, maintainAspectRatio: false }
-      }],
+      visuals: [],
       continents: null,
-      allData: null
+      allData: null,
+      countryInfo: false
     }
   },
   components: {
@@ -43,15 +37,17 @@ export default {
     LineChart
   },
   mounted () {
-    this.axios
-      .get('https://corona.lmao.ninja/v2/continents?sort')
-      .then(response => { this.continents = response; this.updateStats() })
-      .catch(error => { console.error('An API error: ', error) })
-
-    this.axios
-      .get('https://corona.lmao.ninja/v2/historical/all')
-      .then(response => { this.allData = response; this.updateVisuals() })
-      .catch(error => { console.error('An API error: ', error) })
+    console.log('mounted now')
+    if (this.countryInfo !== true) {
+      this.axios
+        .get('https://corona.lmao.ninja/v2/continents?sort')
+        .then(response => { this.continents = response; this.updateStats() })
+        .catch(error => { console.error('An API error: ', error) })
+      this.axios
+        .get('https://corona.lmao.ninja/v2/historical/all')
+        .then(response => { this.allData = response; this.updateVisuals() })
+        .catch(error => { console.error('An API error: ', error) })
+    }
   },
   methods: {
     updateStats () {
@@ -83,16 +79,18 @@ export default {
         deathsPerDay.push(deaths[key])
         recoveriesPerDay.push(recoveries[key])
       }
-      console.log(labels)
-      console.log(casesPerDay)
-      this.visuals[0].chartData = {
-        labels: labels,
-        datasets: [{
-          label: 'Total cases',
-          backgroundColor: '#6aaaff',
-          data: casesPerDay
-        }]
-      }
+      this.visuals.push({
+        id: 1,
+        chartData: {
+          labels: labels,
+          datasets: [{
+            label: 'Total cases',
+            backgroundColor: '#6aaaff',
+            data: casesPerDay
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      })
       this.visuals.push({
         id: 2,
         chartData: {
@@ -123,14 +121,63 @@ export default {
       this.cards[0].amountNew += lastDayCases
       this.cards[1].amountNew += lastDayDeaths
       this.cards[2].amountNew += lastDayRecoveries
+    },
+    updateCountryStats () {
+      this.countryInfo = true
+      let data = this.$store.getters.country
+      this.cards[0].amount = data.cases
+      this.cards[1].amount = data.deaths
+      this.cards[2].amount = data.recoveries
+      this.visuals = []
+      this.visuals.push({
+        id: 1,
+        chartData: {
+          labels: data.visualLabels,
+          datasets: [{
+            label: 'Total cases',
+            backgroundColor: '#6aaaff',
+            data: data.visualData.cases
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      })
+      this.visuals.push({
+        id: 2,
+        chartData: {
+          labels: data.visualLabels,
+          datasets: [{
+            label: 'Deaths',
+            backgroundColor: '#ff5252',
+            data: data.visualData.deatha
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      })
+      this.visuals.push({
+        id: 3,
+        chartData: {
+          labels: data.visualLabels,
+          datasets: [{
+            label: 'recoveries',
+            backgroundColor: '#26a69a',
+            data: data.visualData.recoveries
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      })
+    }
+  },
+  watch: {
+    currentCountry () {
+      return this.$store.getters.currentCountry
     }
   }
 }
 </script>
-
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h1, h2 {
+h1,
+h2 {
   font-weight: normal;
 }
 ul {
