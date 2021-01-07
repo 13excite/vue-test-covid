@@ -1,9 +1,9 @@
-images: node:latest
+#images: node:latest
 
 pages:
   stage: deploy
   script:
-    - npm config set registry https://registry.npm.js.com
+    - npm config set registry https://registry.npmjs.com
     - npm i
     - npm run lint
     - npm run build
